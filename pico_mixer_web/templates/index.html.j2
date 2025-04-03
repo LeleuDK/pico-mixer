@@ -44,12 +44,16 @@
         div.badge {
             color: black;
         }
+
+        kbd {
+            background-color: var(--bs-secondary-bg);
+        }
     </style>
 </head>
 
 <body class="p-2">
     <!-- Content -->
-    <h1 class="text-center pb-2">Pico mixer</h1>
+    <h1 class="text-center pb-2">Mixer</h1>
 
     <div class="position-relative pb-5">
         <div id="usb_status" class="position-absolute top-0 start-50 translate-middle-x"></div>
@@ -59,13 +63,21 @@
     <div class="container">
         {% for track in tracks %}
         {% set track_index = loop.index0 %}
+        {% set col = track_index % 4 %}
         <div class="mb-3" id="track_{{ track_index }}">
             <!--<div class="track mb-2">-->
             
             <div class="track mb-2">
-
-                <span><kbd class="track_{{ track_index }}">{{ loop.index }}</kbd> - {{ track.title.replace(".ogg",
-                    "")}}</span>
+                <span class="track-position">
+                    {% for c in range(4) %}
+                        {% if c == col %}
+                            <kbd class="track_{{ track_index }} me-1">&nbsp;</kbd>
+                        {% else %}
+                            <kbd class="me-1">&nbsp;</kbd>
+                        {% endif %}
+                    {% endfor %}
+                </span>
+                - {{ track.title.replace(".ogg", "") }}
 
                 <div class="d-inline float-end">
                     {% for tag in track.tags %}
