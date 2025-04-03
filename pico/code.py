@@ -6,22 +6,39 @@ from pimoroni_rgbkeypad import RGBKeypad
 
 # Generated via https://medialab.github.io/iwanthue/
 COLORS = [
-    [229, 133, 154],
-    [236, 123, 70],
-    [213, 165, 120],
-    [213, 172, 61],
-    [208, 226, 69],
-    [213, 225, 154],
-    [143, 185, 73],
-    [108, 218, 71],
-    [139, 175, 125],
-    [101, 216, 128],
-    [103, 217, 173],
-    [85, 179, 178],
-    [120, 223, 235],
-    [120, 166, 224],
-    [201, 157, 216],
-    [220, 110, 223],
+    [240,89,48],
+    [237,159,29],
+    [218,208,46],
+    [175,222,56],
+    [122,229,71],
+    [37,142,1],
+    [0,239,213],
+    [89,121,254],
+    [122,70,224],
+    [205,107,229],
+    [229,77,219],
+    [245,60,144],
+    [255,255,255],
+    [255,255,255],
+    [255,0,0],
+    [0,255,0],
+
+    #[229, 133, 154],
+    #[236, 123, 70],
+    #[213, 165, 120],
+    #[213, 172, 61],
+    #[208, 226, 69],
+    #[213, 225, 154],
+    #[143, 185, 73],
+    #[108, 218, 71],
+    #[139, 175, 125],
+    #[101, 216, 128],
+    #[103, 217, 173],
+    #[85, 179, 178],
+    #[120, 223, 235],
+    #[120, 166, 224],
+    #[201, 157, 216],
+    #[220, 110, 223],
 ]
 VOLUME_DOWN_KEY_INDEX = 12
 VOLUME_UP_KEY_INDEX = 13
@@ -31,7 +48,15 @@ ACTIVATED_KEY_BRIGHTNESS = 0.6
 DEACTIVATED_KEY_BRIGHTNESS = 0.2
 BRIGHTNESS_FLUCTUATION_CYCLE_MS = 3000
 
-activated_keys = {}
+# Add a variable to track the current bank
+current_bank = 1  # Start with bank 1
+TOTAL_BANKS = 2  # Number of banks
+TOTAL_TRACKS_PER_BANK = 12  # Tracks per bank
+
+# Modify activated_keys to support multiple banks
+activated_keys = {bank: {} for bank in range(1, TOTAL_BANKS + 1)}
+
+#activated_keys = {}
 keys_being_pressed = {}
 keys_paused = set()
 paused_all = False
@@ -47,6 +72,7 @@ class KeyState:
     unpause_all = "unpause_all"
     vol_down = "vol_down"
     vol_up = "vol_up"
+    switch_bank = "switch_bank"
 
 
 def fluctuating_brightness(t, cycle):
@@ -125,9 +151,25 @@ def handle_keypress_combination(keys_pressed):
 
         send_key_state(key=associated_key_index, state=state)
 
+def update_global_controls(keypad, start_time, paused):
+    # Vi ønsker at sætte faste værdier for de globale knapper (index 12 til 15)
+    # Eksempelvis: 
+    # VOLUME_DOWN (index 12) og VOLUME_UP (index 13) kan forblive uændrede (eller få fast brightness)
+    for i in range(12, 15):
+        keypad.keys[i].brightness = DEACTIVATED_KEY_BRIGHTNESS
+
+    # PAUSE_ALL-knappen (index 15) får fast farve alt efter pause-state:
+    pause_all_key = keypad.keys[PAUSE_ALL_KEY_INDEX]
+    pause_all_key.brightness = DEACTIVATED_KEY_BRIGHTNESS
+    if paused:
+        pause_all_key.color = [255, 255, 0]  # Gul
+        pause_all_key.brightness = ACTIVATED_KEY_BRIGHTNESS
+    else:
+        pause_all_key.color = [0, 255, 0]    # Grøn
+
 
 def main():
-    global paused_all
+    global paused_all, current_bank
     start_time = time.monotonic()
     keypad = RGBKeypad()
 
@@ -155,25 +197,24 @@ def main():
                 # only make the pause button fluctuate and deactivate all other
                 # activated keys, while keeping their activated state, to make it
                 # easy to restore
-                if (
-                    PAUSE_ALL_KEY_INDEX in activated_keys
-                    and key_index != PAUSE_ALL_KEY_INDEX
-                ):
-                    key = keypad.keys[key_index]
-                    key.brightness = DEACTIVATED_KEY_BRIGHTNESS
-                elif key_index in activated_keys:
-                    elapsed_ms = (time.monotonic() - start_time) * 1000
-                    key = keypad.keys[key_index]
-                    key.brightness = fluctuating_brightness(
-                        elapsed_ms, cycle=BRIGHTNESS_FLUCTUATION_CYCLE_MS
-                    )
+                # For bank-knapper (0-11)
+                if key_index < TOTAL_TRACKS_PER_BANK:
+                    if key_index in activated_keys[current_bank]:
+                        elapsed_ms = (time.monotonic() - start_time) * 1000
+                        keypad.keys[key_index].brightness = fluctuating_brightness(
+                            elapsed_ms, cycle=BRIGHTNESS_FLUCTUATION_CYCLE_MS
+                        )
+                    else:
+                        keypad.keys[key_index].brightness = DEACTIVATED_KEY_BRIGHTNESS
+                # For globale knapper (indices 12-15): gør ingenting – de skal have fast brightness
+                # (Evt. kan du sætte dem til en fast værdi, hvis du ønsker det)
                 continue
 
             if key_index in (
                 # The compose keys
                 VOLUME_DOWN_KEY_INDEX,
                 VOLUME_UP_KEY_INDEX,
-                PAUSE_KEY_INDEX,
+                #PAUSE_KEY_INDEX,
             ):
                 continue
 
@@ -187,14 +228,40 @@ def main():
             keys_being_pressed[key_index] = True
 
             # Toggle the key activation state after it was pressed
-            if key_index in activated_keys:
-                activated_keys.pop(key_index)
+            if key_index in activated_keys[current_bank]:
+                activated_keys[current_bank].pop(key_index)
                 key.brightness = DEACTIVATED_KEY_BRIGHTNESS
                 state = KeyState.stop
             else:
-                activated_keys[key_index] = True
+                activated_keys[current_bank][key_index] = True
                 key.brightness = ACTIVATED_KEY_BRIGHTNESS
                 state = KeyState.start
+
+            if key_index == PAUSE_KEY_INDEX:
+                keys_being_pressed[key_index] = True
+                current_bank = (current_bank % TOTAL_BANKS) + 1  # Switch bank
+
+                # Opdater brightness for bank-knapper (0-11) i den nye bank
+                for i, key in enumerate(keypad.keys):
+                    if i < TOTAL_TRACKS_PER_BANK:
+                        key.brightness = (
+                            ACTIVATED_KEY_BRIGHTNESS if i in activated_keys[current_bank]
+                            else DEACTIVATED_KEY_BRIGHTNESS
+                        )
+
+                # Opdater farven på bank-knappen (PAUSE_KEY_INDEX) for den aktuelle bank
+                switch_bank_key = keypad.keys[PAUSE_KEY_INDEX]
+                if current_bank == 1:
+                    switch_bank_key.color = [255, 0, 0]  # Red for bank 1
+                else:
+                    switch_bank_key.color = [255, 0, 255]  # Purple for bank 2
+
+                # Opdater de globale knapper – især pause_all-knappen skal forblive uændret med fast farve
+                update_global_controls(keypad, start_time, paused_all)
+
+                state = KeyState.switch_bank
+                send_key_state(key=key_index, state=state)
+                continue
 
             if key_index == PAUSE_ALL_KEY_INDEX:
                 if paused_all:
@@ -202,6 +269,19 @@ def main():
                 else:
                     state = KeyState.pause_all
                 paused_all = not paused_all
+
+                # Opdater alle aktive tracks (globalt) hvis nødvendigt – behold eksisterende funktionalitet
+                for bank, keys in activated_keys.items():
+                    for i, key in enumerate(keypad.keys):
+                        if i in keys and i < TOTAL_TRACKS_PER_BANK:
+                            key.brightness = (DEACTIVATED_KEY_BRIGHTNESS if paused_all 
+                                            else ACTIVATED_KEY_BRIGHTNESS)
+                
+                # Opdater de globale knapper – især pause_all-knappen skal forblive uændret med fast farve
+                update_global_controls(keypad, start_time, paused_all)
+
+                send_key_state(key=key_index, state=state)
+                continue
 
             send_key_state(key=key_index, state=state)
 

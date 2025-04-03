@@ -1,5 +1,114 @@
 [
   {
+    "title": "Forest.ogg",
+    "tags": [
+      "ambiance",
+      "nature",
+      "day",
+      "travel"
+    ]
+  },
+  {
+    "title": "Thunderstorm and rain.ogg",
+    "tags": [
+      "ambiance",
+      "rain",
+      "storm",
+      "travel",
+      "dramatic"
+    ]
+  },
+  {
+    "title": "Shore.ogg",
+    "tags": [
+      "ambiance",
+      "sea",
+      "travel",
+      "calm"
+    ]
+  },
+  {
+    "title": "Campfire.ogg",
+    "tags": [
+      "ambiance",
+      "fire",
+      "calm",
+      "camp"
+    ]
+  },
+  {
+    "title": "Tavern.ogg",
+    "tags": [
+      "ambiance",
+      "social",
+      "town",
+      "indoor"
+    ]
+  },
+  {
+    "title": "Town at day.ogg",
+    "tags": [
+      "ambiance",
+      "town",
+      "day",
+      "safe"
+    ]
+  },
+  {
+    "title": "Town at night.ogg",
+    "tags": [
+      "ambiance",
+      "town",
+      "night",
+      "ambient"
+    ]
+  },
+  {
+    "title": "Night with crickets.ogg",
+    "tags": [
+      "ambiance",
+      "night",
+      "nature",
+      "calm"
+    ]
+  },
+  {
+    "title": "Cave.ogg",
+    "tags": [
+      "ambiance",
+      "underground",
+      "mystery",
+      "tense"
+    ]
+  },
+  {
+    "title": "Haunted crypt.ogg",
+    "tags": [
+      "ambiance",
+      "undead",
+      "creepy",
+      "dark"
+    ]
+  },
+  {
+    "title": "Spooky whispering.ogg",
+    "tags": [
+      "ambiance",
+      "creepy",
+      "magic",
+      "haunted"
+    ]
+  },
+  {
+    "title": "Engine room.ogg",
+    "tags": [
+      "ambiance",
+      "steampunk",
+      "machine",
+      "tense"
+    ]
+  },
+  {
     "title": "Combat in the Ruins (EXTENDED) - Darkest Dungeon.ogg",
     "tags": [
       "combat",

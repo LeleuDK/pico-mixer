@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-bs-theme="dark">
 
 <head>
     <meta charset="UTF-8">
@@ -7,11 +7,10 @@
     <title>Pico mixer</title>
     <link rel="icon"
         href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎛️</text></svg>">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.1/dist/css/bootstrap.min.css" rel="stylesheet"
-        integrity="sha384-iYQeCzEYFbKjA/T2uDLTpkwGzCiq6soy8tYaI1GyVh/UjpbCx/TYkiZhlZB6+fzT" crossorigin="anonymous">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.4/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
         .non-playing {
-            background-color: rgb(215, 215, 215);
+            background-color: var(--bs-secondary-bg);
         }
 
         .paused {
@@ -59,9 +58,11 @@
 
     <div class="container">
         {% for track in tracks %}
-        <div class="mb-3">
+        {% set track_index = loop.index0 %}
+        <div class="mb-3" id="track_{{ track_index }}">
+            <!--<div class="track mb-2">-->
+            
             <div class="track mb-2">
-                {% set track_index = loop.index0 %}
 
                 <span><kbd class="track_{{ track_index }}">{{ loop.index }}</kbd> - {{ track.title.replace(".ogg",
                     "")}}</span>
