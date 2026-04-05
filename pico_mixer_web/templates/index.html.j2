@@ -48,10 +48,45 @@
         kbd {
             background-color: var(--bs-secondary-bg);
         }
+
+        .audio-enable-modal[hidden] {
+            display: none !important;
+        }
+
+        .audio-enable-modal {
+            position: fixed;
+            inset: 0;
+            z-index: 1050;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+            background: rgba(0, 0, 0, 0.7);
+        }
+
+        .audio-enable-dialog {
+            max-width: 28rem;
+            width: 100%;
+        }
     </style>
 </head>
 
 <body class="p-2">
+    <div id="audio_enable_modal" class="audio-enable-modal" hidden>
+        <div class="audio-enable-dialog card border-0 shadow-lg">
+            <div class="card-body p-4">
+                <h2 class="h4 mb-3">Enable audio playback</h2>
+                <p class="mb-3">
+                    Your browser blocked audio playback until you interact with the page.
+                </p>
+                <p class="mb-4">
+                    Click the button below to enable audio and resume playback.
+                </p>
+                <button id="enable_audio_button" type="button" class="btn btn-primary w-100">Enable audio</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Content -->
     <h1 class="text-center pb-2">Mixer</h1>
 

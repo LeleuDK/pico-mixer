@@ -20,6 +20,7 @@ let currentBank = 1; // Start med bank 1
 const TOTAL_TRACKS_PER_BANK = 12;
 
 let globalPaused = false;
+let pendingAudioPlayback = null;
 
 function roundTo2Digits(num) {
   return Math.round(num * 100) / 100;
@@ -32,10 +33,22 @@ function pauseTrack(audioElement, trackProgressBar) {
   }
 }
 
-function unPauseTrack(audioElement, trackProgressBar) {
+async function tryPlayAudio(audioElement, trackProgressBar) {
+  try {
+    await audioElement.play();
+    return true;
+  } catch (error) {
+    pendingAudioPlayback = { audioElement, trackProgressBar };
+    showAudioEnableModal();
+    return false;
+  }
+}
+
+async function unPauseTrack(audioElement, trackProgressBar) {
   if (audioElement.paused && trackProgressBar.classList.contains("paused")) {
-    audioElement.play();
-    trackProgressBar.classList.remove("paused");
+    if (await tryPlayAudio(audioElement, trackProgressBar)) {
+      trackProgressBar.classList.remove("paused");
+    }
   }
 }
 
@@ -68,13 +81,41 @@ function colorizeTracksKbdElements(colors) {
   }
 }
 
-function startTrack(trackKey, trackAudioElement, trackProgressBar) {
+function showAudioEnableModal() {
+  const modal = document.getElementById("audio_enable_modal");
+  if (modal) {
+    modal.hidden = false;
+  }
+}
+
+function hideAudioEnableModal() {
+  const modal = document.getElementById("audio_enable_modal");
+  if (modal) {
+    modal.hidden = true;
+  }
+}
+
+async function retryPendingAudioPlayback() {
+  if (pendingAudioPlayback === null) {
+    hideAudioEnableModal();
+    return;
+  }
+
+  const { audioElement, trackProgressBar } = pendingAudioPlayback;
+  if (await tryPlayAudio(audioElement, trackProgressBar)) {
+    pendingAudioPlayback = null;
+    trackProgressBar.classList.remove("paused");
+    hideAudioEnableModal();
+  }
+}
+
+async function startTrack(trackKey, trackAudioElement, trackProgressBar) {
   tracksPlaying[trackKey] = trackAudioElement;
   trackProgressBar.classList.remove("non-playing");
   trackProgressBar.classList.remove("paused");
   trackProgressBar.textContent = "100%";
   trackProgressBar.style.backgroundColor = document.getElementsByClassName(`track_${trackKey}`)[0].style.backgroundColor;
-  trackAudioElement.play();
+  await tryPlayAudio(trackAudioElement, trackProgressBar);
 }
 
 function stopTrack(trackKey, trackaudioElement, trackProgressBar) {
@@ -192,6 +233,11 @@ async function probeAudioTrack(audioNode) {
 }
 
 window.addEventListener('load', function () {
+  const enableAudioButton = document.getElementById("enable_audio_button");
+  if (enableAudioButton) {
+    enableAudioButton.addEventListener("click", retryPendingAudioPlayback);
+  }
+
   updateBankDisplay();
   audioNodes = document.getElementsByTagName('audio')
   for (let i = 0; i < audioNodes.length; i++) {
