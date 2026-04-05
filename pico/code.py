@@ -2,51 +2,17 @@ import math
 import time
 
 import usb_cdc
+from keypad_config import (
+    COLORS,
+    PAUSE_ALL_KEY_INDEX,
+    PAUSE_KEY_INDEX,
+    TOTAL_BANKS,
+    TRACK_KEY_COUNT,
+    VOLUME_DOWN_KEY_INDEX,
+    VOLUME_UP_KEY_INDEX,
+)
 from pimoroni_rgbkeypad import RGBKeypad
 
-# Generated via https://medialab.github.io/iwanthue/
-COLORS = [
-    [240,89,48],
-    [237,159,29],
-    [218,208,46],
-    [175,222,56],
-    [122,229,71],
-    [37,142,1],
-    [0,239,213],
-    [89,121,254],
-    [122,70,224],
-    [205,107,229],
-    [229,77,219],
-    [245,60,144],
-    [255,255,255],
-    [255,255,255],
-    [255,0,0],
-    [0,255,0],
-
-    #[229, 133, 154],
-    #[236, 123, 70],
-    #[213, 165, 120],
-    #[213, 172, 61],
-    #[208, 226, 69],
-    #[213, 225, 154],
-    #[143, 185, 73],
-    #[108, 218, 71],
-    #[139, 175, 125],
-    #[101, 216, 128],
-    #[103, 217, 173],
-    #[85, 179, 178],
-    #[120, 223, 235],
-    #[120, 166, 224],
-    #[201, 157, 216],
-    #[220, 110, 223],
-]
-TOTAL_KEYS = 16
-TRACK_KEY_COUNT = 12
-TOTAL_BANKS = 2
-VOLUME_DOWN_KEY_INDEX = 12
-VOLUME_UP_KEY_INDEX = 13
-PAUSE_KEY_INDEX = 14
-PAUSE_ALL_KEY_INDEX = 15
 ACTIVATED_KEY_BRIGHTNESS = 0.6
 DEACTIVATED_KEY_BRIGHTNESS = 0.2
 BRIGHTNESS_FLUCTUATION_CYCLE_MS = 3000

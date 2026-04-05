@@ -1,4 +1,4 @@
-import ast
+import importlib.util
 import json
 import os
 import sys
@@ -27,7 +27,7 @@ app = Flask(
     static_folder=assets_dir,
 )
 sock = Sock(app)
-keypad_code_path = Path(__file__).parent / ".." / "pico" / "code.py"
+keypad_config_path = Path(__file__).parent / ".." / "pico" / "keypad_config.py"
 
 if not sounds_dir.exists():
     click.echo(
@@ -57,14 +57,13 @@ elif not list(sounds_dir.iterdir()):
 
 
 def load_key_colors():
-    with open(keypad_code_path) as keypad_code:
-        module = ast.parse(keypad_code.read(), filename=str(keypad_code_path))
-    for node in module.body:
-        if isinstance(node, ast.Assign):
-            for target in node.targets:
-                if isinstance(target, ast.Name) and target.id == "COLORS":
-                    return ast.literal_eval(node.value)[:12]
-    raise ValueError(f"Could not find COLORS in {keypad_code_path}")
+    spec = importlib.util.spec_from_file_location("keypad_config", keypad_config_path)
+    if spec is None or spec.loader is None:
+        raise ValueError(f"Could not load keypad config from {keypad_config_path}")
+
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module.COLORS[:12]
 
 
 KEY_COLORS = load_key_colors()
