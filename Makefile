@@ -1,7 +1,18 @@
 .DEFAULT_GOAL := help
 
+pico-remount:  ## Remount the CIRCUITPY drive with noasync on macOS Sonoma
+	@disky=$$(df | awk '/CIRCUITPY/ {print $$1}'); \
+	if [ -z "$$disky" ]; then \
+		echo "CIRCUITPY is not mounted"; \
+		exit 1; \
+	fi; \
+	sudo umount /Volumes/CIRCUITPY; \
+	sudo mkdir -p /Volumes/CIRCUITPY; \
+	sleep 2; \
+	sudo mount -v -o noasync -t msdos "$$disky" /Volumes/CIRCUITPY
+
 pico-sync:  ## Sync the CircuitPython code onto the pico
-	@cp -r pico/* $$(mount | grep CIRCUITPY | cut -d' ' -f 3)
+	@COPYFILE_DISABLE=1 cp -R -X pico/* $$(mount | grep CIRCUITPY | cut -d' ' -f 3)
 
 mixer:  ## Start the sound mixer terminal application
 	@poetry run python pico_mixer/mixer.py

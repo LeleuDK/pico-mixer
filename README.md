@@ -71,10 +71,13 @@ $ make install
 Plug the keypad, and run:
 
 ```console
+$ make pico-remount
 $ make pico-sync
 ```
 
 The keypad should light up. Unplug it.
+
+If you are using macOS Sonoma and get write errors when copying files to the `CIRCUITPY` volume, run `make pico-remount` before `make pico-sync`. This remounts the volume with `noasync`, which helps avoid known write issues on some Sonoma versions.
 
 Now, copy all the sounds files you would like to play (12 max) under the `pico_mixer_web/assets/sounds` folder, and replace each example `title` attribute under the `config.json` file with the name of a sound file you copied under `sounds`. Feel free to add a couple of descriptive tags under the `tags` attribute. Save the `config.json` file.
 
