@@ -42,26 +42,15 @@ function unpauseAllPlayingTracks() {
 }
 
 function colorizeTracksKbdElements(colors) {
-  const totalTracks = 24; // Vi antager, at du har 24 tracks i alt
+  const totalTracks = 24;
   for (let i = 0; i < totalTracks; i++) {
-    const colorIndex = i % colors.length;  // colors.length er 12 her (efter at du sender COLORS[:12])
+    const colorIndex = i % colors.length;
     const color = colors[colorIndex];
     const trackColoredElements = document.getElementsByClassName(`track_${i}`);
     for (const element of trackColoredElements) {
       element.style.backgroundColor = `rgb(${color[0]}, ${color[1]}, ${color[2]})`;
       element.style.color = 'white';
     }
-  }
-}
-
-function colorizeTracksKbdElements_old(colors) {
-  for (i=0; i<colors.length; i++) {
-    const color = colors[i];
-    const trackColoredElements = document.getElementsByClassName(`track_${i}`);
-    for (const element of trackColoredElements) {
-      element.style.backgroundColor = `rgb(${color[0]}, ${color[1]}, ${color[2]}`;
-      element.style.color = 'white';
-    };
   }
 }
 
@@ -110,15 +99,10 @@ function alertAboutTrackNotFound(trackNode) {
 }
 
 function updateBankDisplay() {
-  // Gå alle tracks igennem. Her antages det, at audio-elementerne og tilhørende divs har id'er med
-  // formaterne audio_track_{index} og track_{index}. Hvis du ikke har track div'ene, kan du
-  // alternativt ændre baggrundsfarven på de tilhørende kbd-elementer.
-  const totalTracks = 24; // eller brug din dynamiske værdi fra config
+  const totalTracks = 24;
   for (let i = 0; i < totalTracks; i++) {
-    // Antag, at du har en container for hvert track med id'et "track_{i}"
     const trackDiv = document.getElementById(`track_${i}`);
     if (!trackDiv) continue;
-    // Hvis i er inden for den aktive bank, vis elementet, ellers gem det
     if (currentBank === 1 && i < TOTAL_TRACKS_PER_BANK) {
       trackDiv.style.display = "block";
     } else if (currentBank === 2 && i >= TOTAL_TRACKS_PER_BANK) {
@@ -143,12 +127,10 @@ ws.addEventListener('message', event => {
     pauseAllPlayingTracks();
   } else if (keyEvent.state === "unpause_all") {
     unpauseAllPlayingTracks();
-  } else if (keyEvent.state === "switch_bank") {  // <== NY
-    // Skift bank: hvis vi er i bank 1, skift til bank 2 og omvendt
+  } else if (keyEvent.state === "switch_bank") {
     currentBank = currentBank === 1 ? 2 : 1;
     updateBankDisplay();
   } else {
-    // Her remapper vi nøglen baseret på hvilken bank der er aktiv.
     const physicalKey = parseInt(keyEvent.key);
     const effectiveKey = currentBank === 2 ? physicalKey + TOTAL_TRACKS_PER_BANK : physicalKey;
 
@@ -196,7 +178,6 @@ async function probeAudioTrack(audioNode) {
 }
 
 window.addEventListener('load', function () {
-  // Skjul de tracks, der ikke hører til den aktive bank
   updateBankDisplay();
   audioNodes = document.getElementsByTagName('audio')
   for (let i = 0; i < audioNodes.length; i++) {
