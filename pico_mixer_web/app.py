@@ -1,3 +1,4 @@
+import ast
 import json
 import os
 import sys
@@ -26,6 +27,7 @@ app = Flask(
     static_folder=assets_dir,
 )
 sock = Sock(app)
+keypad_code_path = Path(__file__).parent / ".." / "pico" / "code.py"
 
 if not sounds_dir.exists():
     click.echo(
@@ -54,6 +56,20 @@ elif not list(sounds_dir.iterdir()):
     )
 
 
+def load_key_colors():
+    with open(keypad_code_path) as keypad_code:
+        module = ast.parse(keypad_code.read(), filename=str(keypad_code_path))
+    for node in module.body:
+        if isinstance(node, ast.Assign):
+            for target in node.targets:
+                if isinstance(target, ast.Name) and target.id == "COLORS":
+                    return ast.literal_eval(node.value)[:12]
+    raise ValueError(f"Could not find COLORS in {keypad_code_path}")
+
+
+KEY_COLORS = load_key_colors()
+
+
 def find_usb_device():
     if not (usb_ports := list(list_ports(r".*"))):
         return
@@ -80,6 +96,7 @@ def stream_key_events(ws):
                 continue
             else:
                 ws.send('{"state": "usb_connected"}')
+                ws.send(json.dumps({"state": "init", "colors": KEY_COLORS}))
                 connected = True
         elif usb_device is not None:
             try:
