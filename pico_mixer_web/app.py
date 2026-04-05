@@ -28,6 +28,7 @@ app = Flask(
 )
 sock = Sock(app)
 keypad_config_path = Path(__file__).parent / ".." / "pico" / "keypad_config.py"
+keypad_protocol_path = Path(__file__).parent / ".." / "pico" / "keypad_protocol.py"
 
 if not sounds_dir.exists():
     click.echo(
@@ -56,17 +57,57 @@ elif not list(sounds_dir.iterdir()):
     )
 
 
-def load_key_colors():
-    spec = importlib.util.spec_from_file_location("keypad_config", keypad_config_path)
+def load_module(module_name, module_path):
+    spec = importlib.util.spec_from_file_location(module_name, module_path)
     if spec is None or spec.loader is None:
-        raise ValueError(f"Could not load keypad config from {keypad_config_path}")
+        raise ValueError(f"Could not load module {module_name} from {module_path}")
 
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
-    return module.COLORS[:12]
+    return module
 
 
-KEY_COLORS = load_key_colors()
+keypad_config = load_module("keypad_config", keypad_config_path)
+keypad_protocol = load_module("keypad_protocol", keypad_protocol_path)
+
+KEY_COLORS = keypad_config.COLORS[: keypad_config.TRACK_KEY_COUNT]
+EVENT_STATE = keypad_protocol.EVENT_STATE
+DEVICE_EVENT_STATES = keypad_protocol.DEVICE_EVENT_STATES
+TRACK_EVENT_STATES = keypad_protocol.TRACK_EVENT_STATES
+
+
+def normalize_key_event(message):
+    if not isinstance(message, dict):
+        return
+
+    state = message.get("state")
+    if state not in DEVICE_EVENT_STATES:
+        return
+
+    normalized_message = {"state": state}
+
+    if state == EVENT_STATE["INIT"]:
+        colors = message.get("colors")
+        if not isinstance(colors, list):
+            return
+        normalized_message["colors"] = colors[: keypad_config.TRACK_KEY_COUNT]
+        return normalized_message
+
+    key = message.get("key")
+    try:
+        normalized_key = int(key)
+    except (TypeError, ValueError):
+        return
+
+    normalized_message["key"] = normalized_key
+
+    if state in TRACK_EVENT_STATES:
+        if not 0 <= normalized_key < keypad_config.TRACK_KEY_COUNT:
+            return
+    elif not 0 <= normalized_key < keypad_config.TOTAL_KEYS:
+        return
+
+    return normalized_message
 
 
 def find_usb_device():
@@ -90,12 +131,12 @@ def stream_key_events(ws):
     while True:
         if not connected:
             if not (usb_device := find_usb_device()):
-                ws.send('{"state": "usb_disconnected"}')
+                ws.send(json.dumps({"state": EVENT_STATE["USB_DISCONNECTED"]}))
                 time.sleep(1)
                 continue
             else:
-                ws.send('{"state": "usb_connected"}')
-                ws.send(json.dumps({"state": "init", "colors": KEY_COLORS}))
+                ws.send(json.dumps({"state": EVENT_STATE["USB_CONNECTED"]}))
+                ws.send(json.dumps({"state": EVENT_STATE["INIT"], "colors": KEY_COLORS}))
                 connected = True
         elif usb_device is not None:
             try:
@@ -104,13 +145,14 @@ def stream_key_events(ws):
                 if not line.startswith("{"):
                     continue
                 try:
-                    json.loads(line)
+                    message = json.loads(line)
                 except ValueError:
                     continue
-                else:
-                    ws.send(line)
+                normalized_message = normalize_key_event(message)
+                if normalized_message is not None:
+                    ws.send(json.dumps(normalized_message))
             except serial.serialutil.SerialException:
-                ws.send('{"state": "usb_disconnected"}')
+                ws.send(json.dumps({"state": EVENT_STATE["USB_DISCONNECTED"]}))
                 connected = False
                 time.sleep(1)
 

@@ -1,6 +1,20 @@
 const ws = new WebSocket("ws://localhost:8000/key_events");
 const tracksPlaying = {};
 const volumeIncrement = 0.05;
+const EVENT_STATE = {
+  INIT: "init",
+  PAUSE: "pause",
+  PAUSE_ALL: "pause_all",
+  START: "start",
+  STOP: "stop",
+  UNPAUSE: "unpause",
+  UNPAUSE_ALL: "unpause_all",
+  USB_CONNECTED: "usb_connected",
+  USB_DISCONNECTED: "usb_disconnected",
+  VOL_DOWN: "vol_down",
+  VOL_UP: "vol_up",
+  SWITCH_BANK: "switch_bank",
+};
 
 let currentBank = 1; // Start med bank 1
 const TOTAL_TRACKS_PER_BANK = 12;
@@ -117,17 +131,17 @@ ws.addEventListener('message', event => {
   const keyEvent = JSON.parse(event.data);
   const usbStatus = document.getElementById("usb_status");
 
-  if (keyEvent.state === "usb_disconnected") {
+  if (keyEvent.state === EVENT_STATE.USB_DISCONNECTED) {
     usbStatus.textContent = "🔌 🚫";
-  } else if (keyEvent.state === "usb_connected") {
+  } else if (keyEvent.state === EVENT_STATE.USB_CONNECTED) {
     usbStatus.textContent = "🔌 ✅";
-  } else if (keyEvent.state === "init") {
+  } else if (keyEvent.state === EVENT_STATE.INIT) {
     colorizeTracksKbdElements(keyEvent.colors);
-  } else if (keyEvent.state === "pause_all") {
+  } else if (keyEvent.state === EVENT_STATE.PAUSE_ALL) {
     pauseAllPlayingTracks();
-  } else if (keyEvent.state === "unpause_all") {
+  } else if (keyEvent.state === EVENT_STATE.UNPAUSE_ALL) {
     unpauseAllPlayingTracks();
-  } else if (keyEvent.state === "switch_bank") {
+  } else if (keyEvent.state === EVENT_STATE.SWITCH_BANK) {
     currentBank = currentBank === 1 ? 2 : 1;
     updateBankDisplay();
   } else {
@@ -142,25 +156,25 @@ ws.addEventListener('message', event => {
     }
 
     switch (keyEvent.state) {
-      case "start":
+      case EVENT_STATE.START:
         startTrack(effectiveKey, audioElement, trackProgressBar);
         if (globalPaused) {
           pauseTrack(audioElement, trackProgressBar);
         }
         break;
-      case "stop":
+      case EVENT_STATE.STOP:
         stopTrack(effectiveKey, audioElement, trackProgressBar);
         break;
-      case "vol_up":
+      case EVENT_STATE.VOL_UP:
         increaseTrackVolume(audioElement, trackProgressBar);
         break;
-      case "vol_down":
+      case EVENT_STATE.VOL_DOWN:
         decreaseTrackVolume(audioElement, trackProgressBar);
         break;
-      case "pause":
+      case EVENT_STATE.PAUSE:
         pauseTrack(audioElement, trackProgressBar);
         break;
-      case "unpause":
+      case EVENT_STATE.UNPAUSE:
         unPauseTrack(audioElement, trackProgressBar);
         break;
     }

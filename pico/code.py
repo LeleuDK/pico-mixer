@@ -11,6 +11,7 @@ from keypad_config import (
     VOLUME_DOWN_KEY_INDEX,
     VOLUME_UP_KEY_INDEX,
 )
+from keypad_protocol import EVENT_STATE
 from pimoroni_rgbkeypad import RGBKeypad
 
 ACTIVATED_KEY_BRIGHTNESS = 0.6
@@ -22,19 +23,6 @@ activated_keys = {bank: {} for bank in range(1, TOTAL_BANKS + 1)}
 keys_being_pressed = {}
 keys_paused = set()
 paused_all = False
-
-
-class KeyState:
-    INIT = "init"
-    PAUSE = "pause"
-    PAUSE_ALL = "pause_all"
-    START = "start"
-    STOP = "stop"
-    UNPAUSE = "unpause"
-    UNPAUSE_ALL = "unpause_all"
-    VOL_DOWN = "vol_down"
-    VOL_UP = "vol_up"
-    SWITCH_BANK = "switch_bank"
 
 
 def fluctuating_brightness(t, cycle):
@@ -109,7 +97,7 @@ def advertise_keys_colors():
     """Send an init message over USB with the color of each key"""
     while not usb_cdc.console.connected:
         time.sleep(0.1)
-    send_message('{"state": "%s", "colors": %s}\n' % (KeyState.INIT, str(COLORS[:12])))
+    send_message('{"state": "%s", "colors": %s}\n' % (EVENT_STATE["INIT"], str(COLORS[:12])))
 
 
 def handle_keypress_combination(keys_pressed):
@@ -131,17 +119,17 @@ def handle_keypress_combination(keys_pressed):
         keys_being_pressed[associated_key_index] = True
 
         if keys_pressed[VOLUME_DOWN_KEY_INDEX] is True:
-            state = KeyState.VOL_DOWN
+            state = EVENT_STATE["VOL_DOWN"]
         elif keys_pressed[VOLUME_UP_KEY_INDEX] is True:
-            state = KeyState.VOL_UP
+            state = EVENT_STATE["VOL_UP"]
         else:
             # pause / unpause
             if associated_key_index not in keys_paused:
                 keys_paused.add(associated_key_index)
-                state = KeyState.PAUSE
+                state = EVENT_STATE["PAUSE"]
             else:
                 keys_paused.remove(associated_key_index)
-                state = KeyState.UNPAUSE
+                state = EVENT_STATE["UNPAUSE"]
 
         send_key_state(key=associated_key_index, state=state)
 
@@ -176,11 +164,11 @@ def toggle_track_key(keypad, key_index):
     if key_index in activated_keys[current_bank]:
         activated_keys[current_bank].pop(key_index)
         key.brightness = DEACTIVATED_KEY_BRIGHTNESS
-        return KeyState.STOP
+        return EVENT_STATE["STOP"]
 
     activated_keys[current_bank][key_index] = True
     key.brightness = ACTIVATED_KEY_BRIGHTNESS
-    return KeyState.START
+    return EVENT_STATE["START"]
 
 
 def handle_bank_switch(keypad, key_index, start_time):
@@ -188,16 +176,16 @@ def handle_bank_switch(keypad, key_index, start_time):
 
     current_bank = (current_bank % TOTAL_BANKS) + 1
     refresh_controls(keypad, start_time)
-    send_key_state(key=key_index, state=KeyState.SWITCH_BANK)
+    send_key_state(key=key_index, state=EVENT_STATE["SWITCH_BANK"])
 
 
 def handle_pause_all(keypad, key_index, start_time):
     global paused_all
 
     if paused_all:
-        state = KeyState.UNPAUSE_ALL
+        state = EVENT_STATE["UNPAUSE_ALL"]
     else:
-        state = KeyState.PAUSE_ALL
+        state = EVENT_STATE["PAUSE_ALL"]
     paused_all = not paused_all
 
     refresh_controls(keypad, start_time)
