@@ -14,9 +14,6 @@ pico-remount:  ## Remount the CIRCUITPY drive with noasync on macOS Sonoma
 pico-sync:  ## Sync the CircuitPython code onto the pico
 	@COPYFILE_DISABLE=1 cp -R -X pico/* $$(mount | grep CIRCUITPY | cut -d' ' -f 3)
 
-mixer:  ## Start the sound mixer terminal application
-	@poetry run python pico_mixer/mixer.py
-
 webmixer:  ## Start the web-based sound mixer
 	@sleep 2 && open http://localhost:8000&
 	@cd pico_mixer_web && poetry run flask run --port 8000 --reload

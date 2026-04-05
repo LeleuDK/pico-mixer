@@ -15,25 +15,11 @@ The `code.py` script runs on a Raspberry Pi Pico, running [CircuitPython](https:
 
 <img width="100%" alt="Screen Shot 2022-09-17 at 15 20 23" src="https://user-images.githubusercontent.com/480131/190859070-7c1365d8-d062-462d-a73c-69e2f6cabcc1.png">
 
-When a key (or a combination of Volume up/down + track key) is pressed, a JSON-formatted message is sent over USB. This message is read by the `mixer.py` script, a curses app displaying each individual track, associated with their volume bar.
-
-<img width="100%" alt="Screen Shot 2022-09-17 at 15 15 47" src="https://user-images.githubusercontent.com/480131/190859066-77211be5-a692-450b-88c9-b99139f94216.png">
-
-
-### Limitations
-
-The `mixer.py` script currently uses [`pygame.mixer`](https://www.pygame.org/docs/ref/mixer.html) to play the individual track sound files over separate channels. While this works, the startup time can be excruciatingly slow, as each sound file must be fully loaded in memory before the app can start.
-
-This is due to the fact that `pygame` can handle sound 2 different ways:
-- it can stream large sound files as background music via `mixer.music` (which is what we want!), but it can only play one track at a time(<sigh>)
-- it can play multiple sound files on different channels via `pygame.mixer.{Sound,Channel}`, but it has to fully load these sound files into memory. It's usually ok because these sounds files are very small, as it's mostly for quick sound effects.
-
- We're trying to shoehorn both `mixer.Sound` and `mixer.music` together, which has sadly proven to not work, as pygame implement streaming from an audio file directly in the `mixer.music` class, without exposing it as a standalone utility.
-
+When a key (or a combination of Volume up/down + track key) is pressed, a JSON-formatted message is sent over USB. The local web application reads these messages, updates the UI in real time, and controls the audio playback in the browser.
 
 ### Local web application
 
-One way I found to circumvent the previously stated [limitations](#limitations) was to implement a slightly more complex web application composed of 3 elements:
+The application is composed of 3 elements:
 
 - the keypad CircuitPython code
 - a webpage in charge of displaying the soundbars and active tracks as well as actually controlling the audio tracks
